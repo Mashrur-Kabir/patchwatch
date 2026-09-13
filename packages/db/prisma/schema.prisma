@@ -1,0 +1,175 @@
+// This is the PatchWatch Prisma schema.
+// Field names are kept in exact sync with docs/API_CONTRACTS.md section 5.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// NextAuth adapter tables — unchanged from NextAuth's official docs
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts             Account[]
+  sessions             Session[]
+  workspaceMemberships WorkspaceMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// PatchWatch core models
+// ---------------------------------------------------------------------------
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members      WorkspaceMember[]
+  installation Installation?
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Installation {
+  id                   String   @id @default(cuid())
+  githubInstallationId Int      @unique
+  workspaceId          String   @unique
+  createdAt            DateTime @default(now())
+
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repositories Repository[]
+}
+
+model Repository {
+  id             String    @id @default(cuid())
+  githubRepoId   Int       @unique
+  fullName       String
+  defaultBranch  String
+  isActive       Boolean   @default(true)
+  lastScanAt     DateTime?
+  installationId String
+  createdAt      DateTime  @default(now())
+
+  installation Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  scanRuns     ScanRun[]
+}
+
+enum ScanStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model ScanRun {
+  id                String     @id @default(cuid())
+  repositoryId      String
+  pullRequestNumber Int
+  pullRequestTitle  String
+  status            ScanStatus @default(PENDING)
+  createdAt         DateTime   @default(now())
+  completedAt       DateTime?
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  findings   Finding[]
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FindingStatus {
+  OPEN
+  RESOLVED
+  IGNORED
+}
+
+model Finding {
+  id             String        @id @default(cuid())
+  scanRunId      String
+  severity       Severity
+  filePath       String
+  lineStart      Int
+  lineEnd        Int
+  message        String        @db.Text
+  aiSuggestedFix String?       @db.Text
+  status         FindingStatus @default(OPEN)
+  createdAt      DateTime      @default(now())
+
+  scanRun ScanRun @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+}
