@@ -22,4 +22,30 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  events: {
+    /**
+     * createUser fires exactly once — only when the Prisma adapter inserts a
+     * brand-new User row. Re-signing in as the same user never triggers this.
+     * We provision a personal Workspace + OWNER membership atomically.
+     */
+    async createUser({ user }) {
+      const workspaceName = user.name
+        ? `${user.name}'s Workspace`
+        : "My Workspace";
+
+      await prisma.$transaction(async (tx) => {
+        const workspace = await tx.workspace.create({
+          data: { name: workspaceName },
+        });
+
+        await tx.workspaceMember.create({
+          data: {
+            workspaceId: workspace.id,
+            userId: user.id,
+            role: "OWNER",
+          },
+        });
+      });
+    },
+  },
 };
