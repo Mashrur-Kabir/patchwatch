@@ -1,5 +1,5 @@
 import { prisma } from "@patchwatch/db";
-import { getInstallationOctokit } from "@/lib/github-app";
+import { listInstallationRepos } from "@patchwatch/github-client";
 
 /**
  * Given a GitHub installation ID and the workspaceId to link it to,
@@ -11,12 +11,7 @@ export async function processInstallation(
   githubInstallationId: number,
   workspaceId: string
 ): Promise<void> {
-  const octokit = getInstallationOctokit(githubInstallationId);
-
-  const { data: installationRepos } =
-    await octokit.rest.apps.listReposAccessibleToInstallation({
-      per_page: 100,
-    });
+  const repositories = await listInstallationRepos(githubInstallationId);
 
   // Upsert the Installation row first so we have its internal id.
   const installation = await prisma.installation.upsert({
@@ -27,7 +22,7 @@ export async function processInstallation(
 
   // Upsert each Repository row.
   await Promise.all(
-    installationRepos.repositories.map((repo) =>
+    repositories.map((repo: any) =>
       prisma.repository.upsert({
         where: { githubRepoId: repo.id },
         update: {

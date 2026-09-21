@@ -10,11 +10,10 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
-    "@octokit/auth-app": "^7.1.4",
-    "@octokit/rest": "^21.1.1",
     "@patchwatch/core": "workspace:*",
     "@patchwatch/db": "workspace:*",
     "@patchwatch/shared-types": "workspace:*",
+    "@patchwatch/github-client": "workspace:*",
     "next": "16.3.5",
     "next-auth": "^4.24.11",
     "react": "19.2.8",
