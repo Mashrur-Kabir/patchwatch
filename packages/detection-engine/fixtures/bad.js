@@ -1,0 +1,1 @@
+function test(req) { eval(req.query.input); }

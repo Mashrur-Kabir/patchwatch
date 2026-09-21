@@ -1,0 +1,6 @@
+rules:
+  - id: my-eval-rule
+    pattern: eval(...)
+    message: "eval is evil"
+    languages: [javascript]
+    severity: WARNING
