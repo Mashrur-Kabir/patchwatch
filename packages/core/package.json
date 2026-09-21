@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@patchwatch/core",
   "version": "0.0.1",
   "private": true,
@@ -9,7 +9,10 @@
     "lint": "echo 'lint not configured'",
     "test": "echo 'no tests yet'"
   },
+  "dependencies": {
+    "@patchwatch/db": "workspace:*"
+  },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5"
   }
 }

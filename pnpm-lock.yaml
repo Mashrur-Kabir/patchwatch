@@ -184,9 +184,15 @@ importers:
       '@octokit/rest':
         specifier: ^21.1.1
         version: 21.1.1
+      '@patchwatch/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@patchwatch/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@patchwatch/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       next:
         specifier: 16.3.5
         version: 16.3.5(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -232,9 +238,13 @@ importers:
         version: 5.9.3
 
   packages/core:
+    dependencies:
+      '@patchwatch/db':
+        specifier: workspace:*
+        version: link:../db
     devDependencies:
       typescript:
-        specifier: ^5.8.3
+        specifier: ^5
         version: 5.9.3
 
   packages/db:
